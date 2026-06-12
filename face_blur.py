@@ -7,8 +7,8 @@ from pathlib import Path
 
 # -- 설정 --
 BLUR_STRENGTH  = 99
-FACE_PADDING   = 0.25
-CONFIDENCE     = 0.6   # 낮출수록 더 많이 감지 (오탐 증가 가능)
+FACE_PADDING   = 0.05
+CONFIDENCE     = 0.8   # 낮출수록 더 많이 감지 (오탐 증가 가능)
 NMS_THRESHOLD  = 0.3
 SUPPORTED_EXTS = {".jpg", ".jpeg", ".png", ".bmp", ".webp", ".tiff"}
 

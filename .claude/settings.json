@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(rm -rf blurred_output)",
+      "Bash(python face_blur.py)"
+    ]
+  }
+}
