@@ -2,7 +2,9 @@
   "permissions": {
     "allow": [
       "Bash(rm -rf blurred_output)",
-      "Bash(python face_blur.py)"
+      "Bash(python face_blur.py)",
+      "Bash(rm -rf resized_output)",
+      "Bash(python resize_only.py)"
     ]
   }
 }
