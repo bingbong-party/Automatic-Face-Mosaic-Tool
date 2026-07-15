@@ -3,13 +3,19 @@ import cv2
 import numpy as np
 import sys
 from pathlib import Path
+from PIL import Image
+import pillow_heif
+pillow_heif.register_heif_opener()
 
 # -- 설정 --
 MAX_FILE_SIZE  = 2 * 1024 * 1024   # 목표 용량 (2MB)
-SUPPORTED_EXTS = {".jpg", ".jpeg", ".png", ".bmp", ".webp", ".tiff"}
+SUPPORTED_EXTS = {".jpg", ".jpeg", ".png", ".bmp", ".webp", ".tiff", ".heic", ".heif"}
 
 
 def imread_unicode(path):
+    if Path(path).suffix.lower() in (".heic", ".heif"):
+        pil_img = Image.open(str(path)).convert("RGB")
+        return cv2.cvtColor(np.array(pil_img), cv2.COLOR_RGB2BGR)
     stream = np.fromfile(str(path), dtype=np.uint8)
     return cv2.imdecode(stream, cv2.IMREAD_COLOR)
 
@@ -58,9 +64,19 @@ def process_image(image_path, output_path):
         return False, False
 
     ext = image_path.suffix.lower()
+    # HEIC는 OpenCV로 인코딩 불가 → JPEG로 저장
+    if ext in (".heic", ".heif"):
+        ext = ".jpg"
+        output_path = output_path.with_suffix(".jpg")
+
     resized = False
     quality = None
-    if image_path.stat().st_size > MAX_FILE_SIZE:
+    # HEIC→JPEG 변환 시 파일 크기가 커질 수 있으므로 인코딩 후 크기 기준으로 확인
+    needs_resize = image_path.stat().st_size > MAX_FILE_SIZE
+    if not needs_resize and ext == ".jpg":
+        _, buf = cv2.imencode(".jpg", image, [cv2.IMWRITE_JPEG_QUALITY, 95])
+        needs_resize = buf.nbytes > MAX_FILE_SIZE
+    if needs_resize:
         image, quality = resize_under_limit(image, ext, MAX_FILE_SIZE)
         resized = True
 
@@ -83,7 +99,6 @@ def main():
 
     if not input_dir.exists():
         print(f"[오류] 'images' 폴더가 없습니다.")
-        input("\nEnter 키를 눌러 종료...")
         sys.exit(1)
 
     output_dir.mkdir(exist_ok=True)
@@ -93,7 +108,6 @@ def main():
 
     if not images:
         print("[알림] images 폴더에 지원되는 이미지 파일이 없습니다.")
-        input("\nEnter 키를 눌러 종료...")
         sys.exit(0)
 
     print(f"총 {len(images)}장 처리 시작...\n")
@@ -118,7 +132,6 @@ def main():
     print(f"  {resized_count}장 리사이즈됨")
     print(f"  저장 위치: {output_dir}")
     print("=" * 50)
-    input("\nEnter 키를 눌러 종료...")
 
 
 if __name__ == "__main__":
